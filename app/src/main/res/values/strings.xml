@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MyTaxi</string>
+    <string name="map_style_json">https://maps.tilehosting.com/styles/positron/style.json</string>
+    <string name="busy">Band</string>
+    <string name="active">Faol</string>
+    <string name="tariff">Tarif</string>
+    <string name="orders">Buyurtmalar</string>
+    <string name="thereIs">Bordur</string>
+</resources>
