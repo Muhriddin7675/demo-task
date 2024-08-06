@@ -1,5 +1,4 @@
 @file:Suppress("DEPRECATION")
-
 package com.example.mytaxitask.presenter.screen.map
 
 import android.widget.Toast
@@ -45,7 +44,6 @@ import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.maps.MapView
-import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
@@ -61,7 +59,6 @@ class MapScreen : Screen {
                 is MapScreenContract.SideEffect.ShowToast -> {
                     Toast.makeText(context, sideEffect.message, Toast.LENGTH_LONG).show()
                 }
-                else -> {}
             }
         })
         MapScreenContent(uiState = uiState, onEventDispatcher = model::onEventDispatcher)
@@ -77,42 +74,37 @@ fun MapScreenContent(
 ) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
-    val mapView = remember { MapView(context) }
-    var zoom by remember { mutableDoubleStateOf(2.0) }
+    val mapView by remember { mutableStateOf(MapView(context)) }
+    var zoom by remember { mutableDoubleStateOf(8.0) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    var fullBootSheet by remember { mutableStateOf(false) }
+    var sheetState by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var lastLatLng by remember { mutableStateOf(tashkentCenterLatLng) }
     val scaffoldState = rememberBottomSheetScaffoldState()
-    val bottomSheetState by remember { mutableStateOf(scaffoldState.bottomSheetState) }
     val isSystemInDarkMode = isSystemInDarkTheme()
     var isDarkMode by remember { mutableStateOf(isSystemInDarkMode) }
     var marker by remember { mutableStateOf<Marker?>(null) }
-
 
     LaunchedEffect(isSystemInDarkMode) {
         isDarkMode = isSystemInDarkMode
     }
 
-    LaunchedEffect(bottomSheetState.currentValue) {
-        scope.launch {
-            onEventDispatcher(MapScreenContract.Intent.ClickButtonChevronUp(bottomSheetState.currentValue == SheetValue.Expanded))
-        }
-    }
-    LaunchedEffect(uiState.fullBootSheet) {
-        fullBootSheet = uiState.fullBootSheet
+    LaunchedEffect(uiState.sheetState) {
+        sheetState = uiState.sheetState
 
     }
     LaunchedEffect(uiState.latLng) {
-        if (uiState.status == Status.Success)
-            lastLatLng = uiState.latLng!!
+            lastLatLng = uiState.latLng
     }
 
     LaunchedEffect(Unit) {
         mapView.getMapAsync { mapboxMap ->
-            restoreMapView(mapboxMap = mapboxMap, latLong = lastLatLng, zoom = zoom)
-            mapboxMap.setMaxZoomPreference(maxZoom)
-            mapboxMap.setMinZoomPreference(minZoom)
+            mapboxMap.apply {
+                setMaxZoomPreference(maxZoom)
+                setMinZoomPreference(minZoom)
+                uiSettings.isCompassEnabled = false
+            }
+            restoreMapView(mapboxMap = mapboxMap, latLong = tashkentCenterLatLng, zoom = 7.0)
         }
     }
 
@@ -154,9 +146,8 @@ fun MapScreenContent(
         }
     }
 
-
     if (uiState.status == Status.Success)
-        DisposableEffect(lastLatLng) {
+        LaunchedEffect(uiState.latLng) {
             mapView.getMapAsync { mapboxMap ->
                 mapboxMap.apply {
                     if (marker == null) {
@@ -168,7 +159,7 @@ fun MapScreenContent(
                         val markerOptions = MarkerOptions()
                             .position(lastLatLng)
                             .icon(icon)
-                        restoreMapView(mapboxMap = mapboxMap, latLong = lastLatLng, zoom = zoom)
+                        restoreMapView(mapboxMap = mapboxMap, latLong = lastLatLng, zoom = 15.0)
                         marker = addMarker(markerOptions)
                     } else {
                         marker?.let {
@@ -177,7 +168,6 @@ fun MapScreenContent(
                     }
                 }
             }
-            onDispose {}
         }
 
     DisposableEffect(lifecycleOwner) {
@@ -204,6 +194,10 @@ fun MapScreenContent(
         sheetPeekHeight = 160.dp,
         sheetShadowElevation = 0.dp,
         sheetContent = {
+            scaffoldState.bottomSheetState.let { sheetState ->
+                val sheetStateBool = (sheetState.currentValue == SheetValue.Expanded)
+                onEventDispatcher(MapScreenContract.Intent.SetSheetState(sheetStateBool))
+            }
             MapScreenScaffoldSheetContent()
         },
         content = {
@@ -212,9 +206,11 @@ fun MapScreenContent(
                 scope = scope,
                 onEventDispatcher = onEventDispatcher,
                 mapView = mapView,
-                fullBootSheet = fullBootSheet,
+                sheetState = sheetState,
                 lastLatLng = lastLatLng,
-                zoom = zoom
+                zoom = zoom,
+                isLoading = uiState.isLoadingTabButton,
+                selectedOption = uiState.selectedOptionTab
             )
         }
     )

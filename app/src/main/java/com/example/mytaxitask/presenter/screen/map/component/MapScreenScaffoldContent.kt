@@ -15,16 +15,13 @@ import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -36,7 +33,6 @@ import com.example.mytaxitask.ui.component.DynamicTabSelector
 import com.example.mytaxitask.ui.theme.black
 import com.example.mytaxitask.ui.theme.errorColor
 import com.example.mytaxitask.ui.theme.greenColor
-import com.example.mytaxitask.util.myLog
 import com.example.mytaxitask.util.playAudio
 import com.example.mytaxitask.util.restoreMapView
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -44,152 +40,159 @@ import com.mapbox.mapboxsdk.maps.MapView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@SuppressLint("SuspiciousIndentation")
+@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreenScaffoldContent(
     mapView: MapView,
     zoom: Double,
-    lastLatLng: LatLng = LatLng(0.0, 0.0),
-    fullBootSheet: Boolean,
+    lastLatLng: LatLng,
+    sheetState: Boolean,
     scaffoldState: BottomSheetScaffoldState,
     scope: CoroutineScope,
-    onEventDispatcher: (MapScreenContract.Intent) -> Unit
+    onEventDispatcher: (MapScreenContract.Intent) -> Unit,
+    isLoading: Boolean,
+    selectedOption: Int
 ) {
-    scope.launch {
-        if (fullBootSheet)
-            scaffoldState.bottomSheetState.expand()
-        else
-            scaffoldState.bottomSheetState.partialExpand()
-    }
-    var isLoading by remember { mutableStateOf(false) }
-    val selectedOption = remember { mutableIntStateOf(0) }
-    val optionTexts = listOf("Band", "Faol")
+    var time = System.currentTimeMillis()
+    val optionTexts =
+        listOf(stringResource(id = R.string.busy), stringResource(id = R.string.active))
     val context = LocalContext.current
-    Box(Modifier.fillMaxSize()) {
-        AndroidView(factory = { mapView })
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            CustomIconButton(
-                modifier = Modifier
-                    .padding(top = 16.dp, start = 16.dp, end = 12.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .clickable { }
-                    .background(MaterialTheme.colorScheme.background)
-                    .size(56.dp),
-                icon = R.drawable.ic_menu,
-                iconSize = 24,
-                childBoxColor = MaterialTheme.colorScheme.primaryContainer,
-                iconColor = MaterialTheme.colorScheme.onBackground
+
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { mapView },
             )
 
-            Box(
+            Row(
                 modifier = Modifier
-                    .padding(top = 16.dp)
-                    .height(56.dp)
-                    .weight(1f),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
             ) {
-                DynamicTabSelector(
-                    tabs = optionTexts,
-                    tabColorList = listOf(errorColor, greenColor),
-                    selectedOption = selectedOption.intValue
+                CustomIconButton(
+                    modifier = Modifier
+                        .padding(top = 16.dp, start = 16.dp, end = 12.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable { }
+                        .background(MaterialTheme.colorScheme.background)
+                        .size(56.dp),
+                    icon = R.drawable.ic_menu,
+                    iconSize = 24,
+                    childBoxColor = MaterialTheme.colorScheme.primaryContainer,
+                    iconColor = MaterialTheme.colorScheme.onBackground
+                )
+
+                Box(
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .height(56.dp)
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    if (selectedOption.intValue != it)
-                        scope.launch {
-                            isLoading = true
-                            playAudio(context, R.raw.click_tab_button)
-                            isLoading = false
-                            selectedOption.intValue = it
+                    DynamicTabSelector(
+                        tabs = optionTexts,
+                        tabColorList = listOf(errorColor, greenColor),
+                        selectedOption = selectedOption
+                    ) {
+                       if (time + 500 < System.currentTimeMillis()) {
+                           time = System.currentTimeMillis()
+                           if (selectedOption != it) {
+                                scope.launch {
+                                    onEventDispatcher(MapScreenContract.Intent.IsLoadingTab(true))
+                                    onEventDispatcher(
+                                        MapScreenContract.Intent.UpdateSelectedOptionTab(
+                                            it
+                                        )
+                                    )
+                                    if (it == 1) playAudio(context, R.raw.click_tap_button_sound)
+                                }
+                            }
                         }
+                    }
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.background),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.secondary,
+                                strokeWidth = 3.dp,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 }
-                if (isLoading) {
+
+                Box(
+                    modifier = Modifier
+                        .padding(top = 16.dp, start = 12.dp, end = 16.dp)
+                        .background(
+                            MaterialTheme.colorScheme.background,
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .size(56.dp)
+                ) {
                     Box(
                         modifier = Modifier
+                            .padding(4.dp)
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.background),
-                        contentAlignment = Alignment.Center
+                            .background(
+                                color = greenColor,
+                                shape = RoundedCornerShape(10.dp)
+                            )
                     ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.secondary,
-                            strokeWidth = 3.dp,
-                            modifier = Modifier.size(24.dp)
+                        CustomTextView(
+                            text = "95",
+                            color = black,
+                            fontSize = 20,
+                            fontWeight = 700,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.align(Alignment.Center)
                         )
                     }
                 }
             }
 
-            Box(
+            MapScreenColumnButtons(
                 modifier = Modifier
-                    .padding(top = 16.dp, start = 12.dp, end = 16.dp)
-                    .background(
-                        MaterialTheme.colorScheme.background,
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                    .size(56.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxSize()
-                        .background(
-                            color = greenColor,
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                ) {
-                    CustomTextView(
-                        text = "95",
-                        color = black,
-                        fontSize = 20,
-                        fontWeight = 700,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-        }
-
-        MapScreenColumnButtons(
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.Center),
-            clickButtonScaleNear = {
-                if (zoom < 22) {
+                    .padding(16.dp)
+                    .align(Alignment.Center),
+                onClickButtonScaleNear = {
                     onEventDispatcher(
                         MapScreenContract.Intent.UpdateZoom(zoom = zoom + 1.0, setHasZoom = false)
                     )
-                }
-            },
-            clickButtonScaleFar = {
-                if (zoom >= 3) {
-                    onEventDispatcher(
-                        MapScreenContract.Intent.UpdateZoom(zoom = zoom - 1.0, setHasZoom = false)
-                    )
-                }
-            },
-            clickButtonNavigation = {
-                mapView.getMapAsync { mapBoxMap ->
-                    onEventDispatcher(
-                        MapScreenContract.Intent.UpdateZoom(zoom = 15.0, setHasZoom = true)
-                    )
-                    restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng,zoom = 15.0)
-                    restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng,zoom = 15.0)
-                    myLog("fun restoreMapView  $lastLatLng")
-                }
+                },
+                onClickButtonScaleFar = {
+                    if (zoom >= 3) {
+                        onEventDispatcher(
+                            MapScreenContract.Intent.UpdateZoom(
+                                zoom = zoom - 1.0,
+                                setHasZoom = false
+                            )
+                        )
+                    }
+                },
+                onClickButtonNavigation = {
+                    mapView.getMapAsync { mapBoxMap ->
+                        onEventDispatcher(
+                            MapScreenContract.Intent.UpdateZoom(zoom = 15.0, setHasZoom = true)
+                        )
+                        restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng, zoom = 15.0)
+                    }
+                },
+                onClickButtonChevronUp = {
+                    onEventDispatcher(MapScreenContract.Intent.SetSheetState(true))
 
+                    scope.launch {
+                        scaffoldState.bottomSheetState.expand()
+                    }
 
-            },
-            clickButtonChevronUp = {
-                scope.launch {
-                    scaffoldState.bottomSheetState.expand()
-                }
-                onEventDispatcher(MapScreenContract.Intent.ClickButtonChevronUp(true))
-            },
-            visibility = !fullBootSheet
-        )
+                },
+                visibility = !sheetState
+            )
+        }
     }
-
 }

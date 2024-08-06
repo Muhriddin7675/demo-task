@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.mytaxitask.R
-import com.example.mytaxitask.ui.component.RowComponentBottomSheet
+import com.example.mytaxitask.ui.component.RowBottomSheetComponent
 
 @Composable
 fun MapScreenScaffoldSheetContent() {
@@ -30,7 +30,7 @@ fun MapScreenScaffoldSheetContent() {
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.primary)
         ) {
-            RowComponentBottomSheet(
+            RowBottomSheetComponent(
                 icon = R.drawable.ic_tariff,
                 title = stringResource(id = R.string.tariff),
                 text = "6/8",
@@ -40,7 +40,7 @@ fun MapScreenScaffoldSheetContent() {
                 thickness = 0.7.dp,
                 color = MaterialTheme.colorScheme.tertiary
             )
-            RowComponentBottomSheet(
+            RowBottomSheetComponent(
                 icon = R.drawable.ic_order,
                 title = stringResource(id = R.string.orders),
                 text = "0",
@@ -50,11 +50,10 @@ fun MapScreenScaffoldSheetContent() {
                 thickness = 0.7.dp,
                 color = MaterialTheme.colorScheme.tertiary
             )
-            RowComponentBottomSheet(
+            RowBottomSheetComponent(
                 icon = R.drawable.ic_rocket,
                 title = stringResource(id = R.string.thereIs),
                 clickable = {})
-
         }
     }
 }

@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.mytaxitask.R
 
 @Composable
-fun RowComponentBottomSheet(
+fun RowBottomSheetComponent(
     icon: Int,
     title: String,
     text: String = "",

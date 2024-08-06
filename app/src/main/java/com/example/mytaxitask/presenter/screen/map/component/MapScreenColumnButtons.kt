@@ -26,10 +26,10 @@ import com.example.mytaxitask.ui.theme.navigationIconColor
 fun MapScreenColumnButtons(
     modifier: Modifier,
     visibility: Boolean,
-    clickButtonScaleNear: () -> Unit,
-    clickButtonScaleFar: () -> Unit,
-    clickButtonNavigation: () -> Unit,
-    clickButtonChevronUp: () -> Unit
+    onClickButtonScaleNear: () -> Unit,
+    onClickButtonScaleFar: () -> Unit,
+    onClickButtonNavigation: () -> Unit,
+    onClickButtonChevronUp: () -> Unit
 ) {
     Row(modifier = modifier) {
 
@@ -44,7 +44,7 @@ fun MapScreenColumnButtons(
             CustomIconButton(
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
-                    .clickable { clickButtonChevronUp() }
+                    .clickable { onClickButtonChevronUp() }
                     .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
                     .size(56.dp),
                 icon = R.drawable.ic_chevrons_up,
@@ -62,11 +62,11 @@ fun MapScreenColumnButtons(
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
         ) {
 
-            Column() {
+            Column {
                 CustomIconButton(
                     modifier = Modifier
                         .clip(RoundedCornerShape(14.dp))
-                        .clickable { clickButtonScaleNear() }
+                        .clickable { onClickButtonScaleNear() }
                         .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
                         .size(56.dp),
                     icon = R.drawable.ic_plus,
@@ -77,7 +77,7 @@ fun MapScreenColumnButtons(
                     modifier = Modifier
                         .padding(top = 16.dp, bottom = 16.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .clickable { clickButtonScaleFar() }
+                        .clickable { onClickButtonScaleFar() }
                         .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
                         .size(56.dp),
                     icon = R.drawable.ic_remove,
@@ -86,7 +86,7 @@ fun MapScreenColumnButtons(
                 CustomIconButton(
                     modifier = Modifier
                         .clip(RoundedCornerShape(14.dp))
-                        .clickable { clickButtonNavigation() }
+                        .clickable { onClickButtonNavigation() }
                         .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
                         .size(56.dp),
                     icon = R.drawable.ic_navigation,

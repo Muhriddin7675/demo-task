@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.constants.MapboxConstants
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import timber.log.Timber
@@ -30,6 +31,7 @@ const val YOUR_MAPTILER_API_KEY = "BLPhpLCCcS9XIn3H7CPZ";
 fun myLog(message: String, tag: String = "TTT") {
     Timber.tag(tag).d(message)
 }
+
 fun getDrawableToBitmap(context: Context, @DrawableRes drawableId: Int): Bitmap {
     val drawable = ContextCompat.getDrawable(context, drawableId)
     val bitmap = Bitmap.createBitmap(
@@ -43,12 +45,28 @@ fun getDrawableToBitmap(context: Context, @DrawableRes drawableId: Int): Bitmap 
     return bitmap
 }
 
-fun restoreMapView(mapboxMap: MapboxMap, latLong: LatLng,zoom:Double) {
-    val cameraPosition = CameraPosition.Builder()
+fun restoreMapView(mapboxMap: MapboxMap, latLong: LatLng, zoom: Double, count: Int = 3) {
+    val targetCameraPosition = CameraPosition.Builder()
         .target(latLong)
         .zoom(zoom)
         .build()
-    mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+    mapboxMap.animateCamera(
+        CameraUpdateFactory.newCameraPosition(targetCameraPosition),
+        MapboxConstants.ANIMATION_DURATION,
+        object : MapboxMap.CancelableCallback {
+            override fun onCancel() {
+                myLog("onCancel called with target: $latLong and zoom: $zoom")
+                myLog("Current camera position: ${mapboxMap.cameraPosition}")
+                if (count > 0) {
+                    restoreMapView(mapboxMap, latLong, zoom, count - 1)
+                }
+            }
+
+            override fun onFinish() {
+                myLog("onFinish called with target: $latLong and zoom: $zoom")
+            }
+        }
+    )
 }
 
 fun registerLocationUpdates(context: Context): LatLng {
