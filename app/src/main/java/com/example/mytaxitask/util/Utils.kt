@@ -8,21 +8,28 @@ import android.graphics.Canvas
 import android.location.LocationListener
 import android.location.LocationManager
 import android.media.MediaPlayer
-import android.widget.Toast
+import android.view.Window
+import androidx.activity.ComponentActivity
 import androidx.annotation.DrawableRes
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import timber.log.Timber
 
+val tashkentCenterLatLng = LatLng(41.2995, 69.2401)
+const val maxZoom = 24.0
+const val minZoom = 1.0
+const val YOUR_MAPTILER_API_KEY = "BLPhpLCCcS9XIn3H7CPZ";
+
+
 fun myLog(message: String, tag: String = "TTT") {
     Timber.tag(tag).d(message)
 }
-
-const val YOUR_MAPTILER_API_KEY = "BLPhpLCCcS9XIn3H7CPZ";
 fun getDrawableToBitmap(context: Context, @DrawableRes drawableId: Int): Bitmap {
     val drawable = ContextCompat.getDrawable(context, drawableId)
     val bitmap = Bitmap.createBitmap(
@@ -36,20 +43,20 @@ fun getDrawableToBitmap(context: Context, @DrawableRes drawableId: Int): Bitmap 
     return bitmap
 }
 
-fun restoreMapView(mapboxMap: MapboxMap, latLong: LatLng) {
+fun restoreMapView(mapboxMap: MapboxMap, latLong: LatLng,zoom:Double) {
     val cameraPosition = CameraPosition.Builder()
         .target(latLong)
-        .zoom(15.0)
+        .zoom(zoom)
         .build()
     mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 }
 
-fun registerLocationUpdates(context: Context, onLocationUpdated: (LatLng) -> Unit) {
+fun registerLocationUpdates(context: Context): LatLng {
+    var latLong = tashkentCenterLatLng
     val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     val locationListener = LocationListener { location ->
         val latLng = LatLng(location.latitude, location.longitude)
-        onLocationUpdated(latLng)
-        Toast.makeText(context, "Location is: $latLng", Toast.LENGTH_LONG).show()
+        latLong = latLng
     }
 
     if (ActivityCompat.checkSelfPermission(
@@ -67,7 +74,7 @@ fun registerLocationUpdates(context: Context, onLocationUpdated: (LatLng) -> Uni
         //                                          int[] grantResults)
         // to handle the case where the user grants the permission. See the documentation
         // for ActivityCompat#requestPermissions for more details.
-        return
+        return latLong
     }
     locationManager.requestLocationUpdates(
         LocationManager.NETWORK_PROVIDER,
@@ -76,15 +83,25 @@ fun registerLocationUpdates(context: Context, onLocationUpdated: (LatLng) -> Uni
         locationListener
     )
 
+    return latLong
 }
 
 
 fun playAudio(context: Context, audioResId: Int) {
     val mediaPlayer = MediaPlayer.create(context, audioResId)
     mediaPlayer?.start()
-
-    // MediaPlayer resurslarini tozalash
     mediaPlayer?.setOnCompletionListener {
         it.release()
     }
+}
+
+fun ComponentActivity.changeColorStatusBar(
+    isDarkMode: Boolean,
+    statusBarColor: androidx.compose.ui.graphics.Color
+) {
+    val window: Window = this.window
+    val decorView = window.decorView
+    val wic = WindowInsetsControllerCompat(window, decorView)
+    wic.isAppearanceLightStatusBars = !isDarkMode
+    window.statusBarColor = statusBarColor.toArgb()
 }

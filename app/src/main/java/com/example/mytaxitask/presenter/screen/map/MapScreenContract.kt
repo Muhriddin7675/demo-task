@@ -12,22 +12,20 @@ interface MapScreenContract {
     }
 
     data class UiState (
-        val scale: Double = 15.0,
+        val zoom: Double = 15.0,
+        val setHasZoom:Boolean = true,
         val latLng: LatLng? = null,
         val fullBootSheet: Boolean = false,
         val busyOrActive: Boolean = false,
-        val status: Status = Status.Loading
+        val status: Status = Status.Loading,
+
     )
 
     sealed interface Intent {
-        data class ClickButtonScaleNear(
-            val scale: Double
+        data class UpdateZoom(
+            val setHasZoom: Boolean,
+            val zoom: Double
         ) : Intent
-
-        data class ClickButtonScaleFar(
-            val scale: Double
-        ) : Intent
-
         data class ClickButtonChevronUp(
             val fullBootSheet: Boolean
         ) : Intent

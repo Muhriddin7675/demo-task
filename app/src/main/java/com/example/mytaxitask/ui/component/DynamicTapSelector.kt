@@ -1,6 +1,5 @@
 package com.example.mytaxitask.ui.component
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,7 +52,7 @@ fun DynamicTabSelector(
     selectedTabTextStyle: TextStyle = TextStyle(
         color = selectedOptionColor,
         textAlign = TextAlign.Center,
-        fontWeight = FontWeight.W700,
+        fontWeight = FontWeight.W600,
         fontSize = 18.sp
     ),
     onTabSelected: (selectedIndex: Int) -> Unit = {}

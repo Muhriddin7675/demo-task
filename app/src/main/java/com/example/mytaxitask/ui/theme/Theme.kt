@@ -29,7 +29,6 @@ private val LightColorScheme = lightColorScheme(
     )
 private val DarkColorScheme = darkColorScheme(
     background = Color(0xff121212),
-//    background = Color.Gray,
     onBackground = Color(0xffffffff),
     primary = Color(0xFF242424),
     secondary = Color(0xFF999999),
@@ -55,10 +54,8 @@ fun MyTaxiTaskTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-//            myLog( "Status bar rang: ${colorScheme.background.toArgb()}")
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            window.isStatusBarContrastEnforced = true
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }

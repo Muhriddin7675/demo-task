@@ -1,5 +1,6 @@
 package com.example.mytaxitask.presenter.screen.map.component
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -41,9 +42,9 @@ import com.example.mytaxitask.util.restoreMapView
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@SuppressLint("SuspiciousIndentation")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreenScaffoldContent(
@@ -55,9 +56,15 @@ fun MapScreenScaffoldContent(
     scope: CoroutineScope,
     onEventDispatcher: (MapScreenContract.Intent) -> Unit
 ) {
+    scope.launch {
+        if (fullBootSheet)
+            scaffoldState.bottomSheetState.expand()
+        else
+            scaffoldState.bottomSheetState.partialExpand()
+    }
     var isLoading by remember { mutableStateOf(false) }
     val selectedOption = remember { mutableIntStateOf(0) }
-    val optionTexts = listOf("Band","Faol")
+    val optionTexts = listOf("Band", "Faol")
     val context = LocalContext.current
     Box(Modifier.fillMaxSize()) {
         AndroidView(factory = { mapView })
@@ -88,26 +95,29 @@ fun MapScreenScaffoldContent(
                 DynamicTabSelector(
                     tabs = optionTexts,
                     tabColorList = listOf(errorColor, greenColor),
-                    selectedOption = selectedOption.intValue) {
-
-                    if(selectedOption.intValue != it)
-                    scope.launch {
-                        isLoading = true
-                        playAudio(context, R.raw.click_tab_button)
-                        delay(200)
-                        isLoading = false
-                        delay(50)
-                        selectedOption.intValue = it
-                    }
+                    selectedOption = selectedOption.intValue
+                ) {
+                    if (selectedOption.intValue != it)
+                        scope.launch {
+                            isLoading = true
+                            playAudio(context, R.raw.click_tab_button)
+                            isLoading = false
+                            selectedOption.intValue = it
+                        }
                 }
                 if (isLoading) {
                     Box(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.background),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary, strokeWidth = 3.dp, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.secondary,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
             }
@@ -147,31 +157,26 @@ fun MapScreenScaffoldContent(
                 .padding(16.dp)
                 .align(Alignment.Center),
             clickButtonScaleNear = {
-                if (zoom < 22){
+                if (zoom < 22) {
                     onEventDispatcher(
-                        MapScreenContract.Intent.ClickButtonScaleNear(
-                            zoom + 1
-                        )
+                        MapScreenContract.Intent.UpdateZoom(zoom = zoom + 1.0, setHasZoom = false)
                     )
                 }
             },
             clickButtonScaleFar = {
-                if (zoom >= 3){
+                if (zoom >= 3) {
                     onEventDispatcher(
-                        MapScreenContract.Intent.ClickButtonScaleFar(
-                            scale = zoom - 1
-                        )
+                        MapScreenContract.Intent.UpdateZoom(zoom = zoom - 1.0, setHasZoom = false)
                     )
                 }
             },
             clickButtonNavigation = {
                 mapView.getMapAsync { mapBoxMap ->
                     onEventDispatcher(
-                        MapScreenContract.Intent.ClickButtonScaleNear(15.0)
+                        MapScreenContract.Intent.UpdateZoom(zoom = 15.0, setHasZoom = true)
                     )
-
-                    restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng)
-                    restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng)
+                    restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng,zoom = 15.0)
+                    restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng,zoom = 15.0)
                     myLog("fun restoreMapView  $lastLatLng")
                 }
 

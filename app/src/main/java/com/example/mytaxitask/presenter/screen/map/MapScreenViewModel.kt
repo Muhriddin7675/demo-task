@@ -50,21 +50,14 @@ class MapScreenViewModel @Inject constructor(
                 }
             }
 
-            is MapScreenContract.Intent.ClickButtonScaleFar -> {
+            is MapScreenContract.Intent.UpdateZoom -> {
                 intent {
                     reduce {
-                        state.copy(scale = intent.scale)
+                        state.copy(zoom = intent.zoom,setHasZoom = intent.setHasZoom)
                     }
                 }
             }
 
-            is MapScreenContract.Intent.ClickButtonScaleNear -> {
-                intent {
-                    reduce {
-                        state.copy(scale = intent.scale)
-                    }
-                }
-            }
 
             is MapScreenContract.Intent.SetLatLong -> {
                 intent {
