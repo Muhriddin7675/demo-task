@@ -2,6 +2,7 @@ package com.example.mytaxitask.ui.theme
 
 import android.app.Activity
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -36,6 +37,7 @@ private val DarkColorScheme = darkColorScheme(
 
 )
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun MyTaxiTaskTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -56,6 +58,7 @@ fun MyTaxiTaskTheme(
 //            myLog( "Status bar rang: ${colorScheme.background.toArgb()}")
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
+            window.isStatusBarContrastEnforced = true
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }

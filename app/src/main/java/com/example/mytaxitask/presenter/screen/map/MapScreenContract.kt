@@ -1,5 +1,7 @@
 package com.example.mytaxitask.presenter.screen.map
 
+import com.example.mytaxitask.util.Status
+import com.mapbox.mapboxsdk.geometry.LatLng
 import org.orbitmvi.orbit.ContainerHost
 
 interface MapScreenContract {
@@ -9,17 +11,13 @@ interface MapScreenContract {
         fun onEventDispatcher(intent: Intent)
     }
 
-    sealed interface UiState {
-
-        data class LoadUiState(
-            val scale: Double = 15.0,
-            val lat: Double = 41.311081,
-            val long: Double = 69.279747,
-            val fullBootSheet: Boolean = false,
-            val busyOrActive: Boolean = false
-        ) : UiState
-
-    }
+    data class UiState (
+        val scale: Double = 15.0,
+        val latLng: LatLng? = null,
+        val fullBootSheet: Boolean = false,
+        val busyOrActive: Boolean = false,
+        val status: Status = Status.Loading
+    )
 
     sealed interface Intent {
         data class ClickButtonScaleNear(
@@ -34,17 +32,18 @@ interface MapScreenContract {
             val fullBootSheet: Boolean
         ) : Intent
 
-        data class ClickBusyOrActive(
-            val busyOrActive: Boolean
+        data class SetLatLong(
+            val latLng: LatLng,
+            val status: Status,
         ) : Intent
 
-        data class ShowToast(val msg: String) : Intent
-
+        data class ShowToast(
+            val message: String
+        ) : Intent
 
     }
 
     sealed interface SideEffect {
-        data class ShowToast(val msg: String) : SideEffect
-
+        data class  ShowToast(val message: String) : SideEffect
     }
 }

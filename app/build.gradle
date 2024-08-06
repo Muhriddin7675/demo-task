@@ -127,6 +127,7 @@ dependencies {
     // Kodein integration
     implementation("cafe.adriel.voyager:voyager-kodein:$voyagerVersion")
 
+    //location services
     implementation ("com.google.android.gms:play-services-location:21.3.0")
 
 }

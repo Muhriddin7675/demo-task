@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import com.example.mytaxitask.data.local.dao.LocationDao
 import com.example.mytaxitask.data.local.entity.LocationEntity
 
-@Database(entities = [LocationEntity::class], version = 2, exportSchema = false)
+@Database(entities = [LocationEntity::class], version = 1, exportSchema = false)
 abstract class AppDB : RoomDatabase() {
     abstract fun locationDao() : LocationDao
 

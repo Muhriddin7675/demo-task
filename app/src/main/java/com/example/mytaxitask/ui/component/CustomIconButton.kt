@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.mytaxitask.ui.theme.MyTaxiTaskTheme
 
 @Composable
 fun CustomIconButton(
@@ -28,7 +27,6 @@ fun CustomIconButton(
     iconColor: Color = MaterialTheme.colorScheme.secondary,
 
 ) {
-    MyTaxiTaskTheme{
         Box(
             modifier = modifier
         ) {
@@ -37,7 +35,7 @@ fun CustomIconButton(
                     .padding(4.dp)
                     .fillMaxSize()
                     .background(
-                        color = childBoxColor.copy(alpha = 0.7f),
+                        color = childBoxColor.copy(alpha = 0.8f),
                         shape = RoundedCornerShape(12.dp)
                     )
                     .padding(8.dp)
@@ -54,6 +52,6 @@ fun CustomIconButton(
             }
 
         }
-    }
+
 
 }
