@@ -61,7 +61,6 @@ fun restoreMapView(mapboxMap: MapboxMap, latLong: LatLng, zoom: Double, count: I
                     restoreMapView(mapboxMap, latLong, zoom, count - 1)
                 }
             }
-
             override fun onFinish() {
                 myLog("onFinish called with target: $latLong and zoom: $zoom")
             }
@@ -112,7 +111,7 @@ fun playAudio(context: Context, audioResId: Int) {
         it.release()
     }
 }
-
+//Muhriddin Valiyev
 fun ComponentActivity.changeColorStatusBar(
     isDarkMode: Boolean,
     statusBarColor: androidx.compose.ui.graphics.Color

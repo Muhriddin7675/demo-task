@@ -8,7 +8,6 @@ import org.orbitmvi.orbit.ContainerHost
 interface MapScreenContract {
 
     sealed interface MapScreenModel : ContainerHost<UiState, SideEffect> {
-
         fun onEventDispatcher(intent: Intent)
     }
 
@@ -28,7 +27,6 @@ interface MapScreenContract {
             val setHasZoom: Boolean,
             val zoom: Double
         ) : Intent
-
         data class SetLatLong(
             val latLng: LatLng,
             val status: Status,

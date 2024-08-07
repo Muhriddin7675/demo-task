@@ -38,6 +38,7 @@ import com.example.mytaxitask.util.restoreMapView
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -50,21 +51,20 @@ fun MapScreenScaffoldContent(
     sheetState: Boolean,
     scaffoldState: BottomSheetScaffoldState,
     scope: CoroutineScope,
-    onEventDispatcher: (MapScreenContract.Intent) -> Unit,
     isLoading: Boolean,
+    onEventDispatcher: (MapScreenContract.Intent) -> Unit,
     selectedOption: Int
 ) {
     var time = System.currentTimeMillis()
     val optionTexts =
         listOf(stringResource(id = R.string.busy), stringResource(id = R.string.active))
     val context = LocalContext.current
-
     Surface(modifier = Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize()) {
             AndroidView(
+                modifier = Modifier.fillMaxSize(),
                 factory = { mapView },
             )
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -94,11 +94,12 @@ fun MapScreenScaffoldContent(
                         tabColorList = listOf(errorColor, greenColor),
                         selectedOption = selectedOption
                     ) {
-                       if (time + 500 < System.currentTimeMillis()) {
-                           time = System.currentTimeMillis()
-                           if (selectedOption != it) {
+                        if (time + 500 < System.currentTimeMillis()) {
+                            time = System.currentTimeMillis()
+                            if (selectedOption != it) {
                                 scope.launch {
                                     onEventDispatcher(MapScreenContract.Intent.IsLoadingTab(true))
+                                    delay(300)
                                     onEventDispatcher(
                                         MapScreenContract.Intent.UpdateSelectedOptionTab(
                                             it
@@ -113,8 +114,10 @@ fun MapScreenScaffoldContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(MaterialTheme.colorScheme.background),
+                                .background(
+                                    MaterialTheme.colorScheme.background,
+                                    RoundedCornerShape(16.dp)
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
@@ -156,43 +159,50 @@ fun MapScreenScaffoldContent(
                 }
             }
 
-            MapScreenColumnButtons(
+            Box(
                 modifier = Modifier
+                    .align(Alignment.Center)
                     .padding(16.dp)
-                    .align(Alignment.Center),
-                onClickButtonScaleNear = {
-                    onEventDispatcher(
-                        MapScreenContract.Intent.UpdateZoom(zoom = zoom + 1.0, setHasZoom = false)
-                    )
-                },
-                onClickButtonScaleFar = {
-                    if (zoom >= 3) {
+            ) {
+                MapScreenColumnButtons(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClickButtonScaleNear = {
                         onEventDispatcher(
-                            MapScreenContract.Intent.UpdateZoom(
-                                zoom = zoom - 1.0,
-                                setHasZoom = false
+                            MapScreenContract.Intent.UpdateZoom(zoom = zoom + 1.0, setHasZoom = false)
+                        )
+                    },
+                    onClickButtonScaleFar = {
+                        if (zoom >= 3) {
+                            onEventDispatcher(
+                                MapScreenContract.Intent.UpdateZoom(
+                                    zoom = zoom - 1.0,
+                                    setHasZoom = false
+                                )
                             )
-                        )
-                    }
-                },
-                onClickButtonNavigation = {
-                    mapView.getMapAsync { mapBoxMap ->
-                        onEventDispatcher(
-                            MapScreenContract.Intent.UpdateZoom(zoom = 15.0, setHasZoom = true)
-                        )
-                        restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng, zoom = 15.0)
-                    }
-                },
-                onClickButtonChevronUp = {
-                    onEventDispatcher(MapScreenContract.Intent.SetSheetState(true))
-
-                    scope.launch {
-                        scaffoldState.bottomSheetState.expand()
-                    }
-
-                },
-                visibility = !sheetState
-            )
+                        }
+                    },
+                    onClickButtonNavigation = {
+                        mapView.getMapAsync { mapBoxMap ->
+                            onEventDispatcher(
+                                MapScreenContract.Intent.UpdateZoom(
+                                    zoom = 15.0,
+                                    setHasZoom = true
+                                )
+                            )
+                            restoreMapView(mapboxMap = mapBoxMap, latLong = lastLatLng, zoom = 15.0)
+                        }
+                    },
+                    onClickButtonChevronUp = {
+                        onEventDispatcher(MapScreenContract.Intent.SetSheetState(true))
+                        scope.launch {
+                            scaffoldState.bottomSheetState.expand()
+                        }
+                    },
+                    visibility = !sheetState
+                )
+            }
         }
     }
 }
+
+

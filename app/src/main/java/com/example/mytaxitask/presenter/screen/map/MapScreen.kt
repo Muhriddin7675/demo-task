@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package com.example.mytaxitask.presenter.screen.map
 
 import android.widget.Toast
@@ -12,6 +11,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -19,10 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.hilt.getViewModel
 import com.example.mytaxitask.R
@@ -47,12 +47,15 @@ import com.mapbox.mapboxsdk.maps.MapView
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
+
+
 class MapScreen : Screen {
     @Composable
     override fun Content() {
         val model: MapScreenContract.MapScreenModel = getViewModel<MapScreenViewModel>()
-        val uiState = model.collectAsState().value
+        val uiState = model.collectAsState()
         val context = LocalContext.current
+        val mapView = remember { MapView(context) }
 
         model.collectSideEffect(sideEffect = { sideEffect ->
             when (sideEffect) {
@@ -61,40 +64,33 @@ class MapScreen : Screen {
                 }
             }
         })
-        MapScreenContent(uiState = uiState, onEventDispatcher = model::onEventDispatcher)
+        MapScreenContent(
+            uiState = uiState,
+            onEventDispatcher = model::onEventDispatcher,
+            mapView = mapView
+        )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreenContent(
-    uiState: UiState,
-    onEventDispatcher: (MapScreenContract.Intent) -> Unit
+    uiState: State<UiState>,
+    onEventDispatcher: (MapScreenContract.Intent) -> Unit,
+    mapView: MapView
 ) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
-    val mapView by remember { mutableStateOf(MapView(context)) }
     var zoom by remember { mutableDoubleStateOf(8.0) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    var sheetState by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    var lastLatLng by remember { mutableStateOf(tashkentCenterLatLng) }
     val scaffoldState = rememberBottomSheetScaffoldState()
+    val scope = rememberCoroutineScope()
     val isSystemInDarkMode = isSystemInDarkTheme()
-    var isDarkMode by remember { mutableStateOf(isSystemInDarkMode) }
     var marker by remember { mutableStateOf<Marker?>(null) }
+    val bottomSheetState by remember { mutableStateOf(scaffoldState.bottomSheetState) }
 
-    LaunchedEffect(isSystemInDarkMode) {
-        isDarkMode = isSystemInDarkMode
-    }
-
-    LaunchedEffect(uiState.sheetState) {
-        sheetState = uiState.sheetState
-
-    }
-    LaunchedEffect(uiState.latLng) {
-            lastLatLng = uiState.latLng
+    LaunchedEffect((bottomSheetState.currentValue)) {
+        onEventDispatcher(MapScreenContract.Intent.SetSheetState(bottomSheetState.currentValue == SheetValue.Expanded))
     }
 
     LaunchedEffect(Unit) {
@@ -107,15 +103,14 @@ fun MapScreenContent(
             restoreMapView(mapboxMap = mapboxMap, latLong = tashkentCenterLatLng, zoom = 7.0)
         }
     }
-
     activity.changeColorStatusBar(
-        isDarkMode = isDarkMode,
+        isDarkMode = isSystemInDarkMode,
         statusBarColor = MaterialTheme.colorScheme.background
     )
 
-    LaunchedEffect(isDarkMode) {
+    LaunchedEffect(isSystemInDarkMode) {
         mapView.getMapAsync { mapboxMap ->
-            if (isDarkMode) {
+            if (isSystemInDarkMode) {
                 mapboxMap.setStyle("https://api.maptiler.com/maps/streets-v2-dark/style.json?key=$YOUR_MAPTILER_API_KEY")
             } else {
                 mapboxMap.setStyle("https://api.maptiler.com/maps/streets/style.json?key=$YOUR_MAPTILER_API_KEY")
@@ -123,14 +118,14 @@ fun MapScreenContent(
         }
     }
 
-    LaunchedEffect(uiState.zoom) {
+    LaunchedEffect(uiState.value.zoom) {
         mapView.getMapAsync { mapboxMap ->
-            myLog("uiState.zoom: ${uiState.zoom}")
-            zoom = if (uiState.setHasZoom) {
-                uiState.zoom
+            myLog("uiState.value.zoom: ${uiState.value.zoom}")
+            zoom = if (uiState.value.setHasZoom) {
+                uiState.value.zoom
             } else {
                 val currentZoom = mapboxMap.cameraPosition.zoom
-                currentZoom + uiState.zoom - zoom
+                currentZoom + uiState.value.zoom - zoom
             }
 
             if (zoom < minZoom) zoom = minZoom
@@ -140,14 +135,12 @@ fun MapScreenContent(
                 .target(mapboxMap.cameraPosition.target)
                 .zoom(zoom)
                 .build()
-
             mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-
         }
     }
 
-    if (uiState.status == Status.Success)
-        LaunchedEffect(uiState.latLng) {
+    if (uiState.value.status == Status.Success)
+        DisposableEffect(uiState.value.latLng) {
             mapView.getMapAsync { mapboxMap ->
                 mapboxMap.apply {
                     if (marker == null) {
@@ -157,17 +150,22 @@ fun MapScreenContent(
                         )
                         val icon = bitmap.let { IconFactory.getInstance(context).fromBitmap(it) }
                         val markerOptions = MarkerOptions()
-                            .position(lastLatLng)
+                            .position(uiState.value.latLng)
                             .icon(icon)
-                        restoreMapView(mapboxMap = mapboxMap, latLong = lastLatLng, zoom = 15.0)
+                        restoreMapView(
+                            mapboxMap = mapboxMap,
+                            latLong = uiState.value.latLng,
+                            zoom = 15.0
+                        )
                         marker = addMarker(markerOptions)
                     } else {
                         marker?.let {
-                            it.position = lastLatLng
+                            it.position = uiState.value.latLng
                         }
                     }
                 }
             }
+            onDispose {}
         }
 
     DisposableEffect(lifecycleOwner) {
@@ -194,10 +192,6 @@ fun MapScreenContent(
         sheetPeekHeight = 160.dp,
         sheetShadowElevation = 0.dp,
         sheetContent = {
-            scaffoldState.bottomSheetState.let { sheetState ->
-                val sheetStateBool = (sheetState.currentValue == SheetValue.Expanded)
-                onEventDispatcher(MapScreenContract.Intent.SetSheetState(sheetStateBool))
-            }
             MapScreenScaffoldSheetContent()
         },
         content = {
@@ -206,11 +200,11 @@ fun MapScreenContent(
                 scope = scope,
                 onEventDispatcher = onEventDispatcher,
                 mapView = mapView,
-                sheetState = sheetState,
-                lastLatLng = lastLatLng,
+                sheetState = uiState.value.sheetState,
+                lastLatLng = uiState.value.latLng,
                 zoom = zoom,
-                isLoading = uiState.isLoadingTabButton,
-                selectedOption = uiState.selectedOptionTab
+                isLoading = uiState.value.isLoadingTabButton,
+                selectedOption = uiState.value.selectedOptionTab
             )
         }
     )

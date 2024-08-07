@@ -7,7 +7,6 @@ import com.example.mytaxitask.domain.LocationRepository
 import com.example.mytaxitask.util.Status
 import com.mapbox.mapboxsdk.geometry.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -22,11 +21,9 @@ class MapScreenViewModel @Inject constructor(
 
 
     init {
-
         locationRepository.locationFlow.onEach {
             it?.let { handleLatLng(it) }
         }.launchIn(viewModelScope)
-
     }
 
     private fun handleLatLng(latLng: LatLng) {
@@ -39,56 +36,45 @@ class MapScreenViewModel @Inject constructor(
 
     override fun onEventDispatcher(intent: MapScreenContract.Intent) {
         when (intent) {
-            is MapScreenContract.Intent.UpdateZoom ->
+            is MapScreenContract.Intent.UpdateZoom -> {
                 intent {
-                    reduce {
-                        state.copy(zoom = intent.zoom, setHasZoom = intent.setHasZoom)
-                    }
+                    reduce { state.copy(zoom = intent.zoom, setHasZoom = intent.setHasZoom) }
                 }
+            }
 
-            is MapScreenContract.Intent.SetLatLong ->
+            is MapScreenContract.Intent.SetLatLong -> {
                 intent {
-                    reduce {
-                        state.copy(latLng = intent.latLng, status = intent.status)
-                    }
+                    reduce { state.copy(latLng = intent.latLng, status = intent.status) }
                 }
+            }
 
-
-            is MapScreenContract.Intent.ShowToast ->
+            is MapScreenContract.Intent.ShowToast -> {
                 intent {
                     postSideEffect(MapScreenContract.SideEffect.ShowToast(intent.message))
                 }
-
+            }
 
             is MapScreenContract.Intent.SetSheetState -> {
                 intent {
-                    reduce {
-                        state.copy(sheetState = intent.sheetState)
-                    }
+                    reduce { state.copy(sheetState = intent.sheetState) }
                 }
             }
 
             is MapScreenContract.Intent.IsLoadingTab -> {
                 intent {
-                    reduce {
-                        state.copy(isLoadingTabButton = intent.isLoading)
-                    }
+                    reduce { state.copy(isLoadingTabButton = intent.isLoading) }
                 }
             }
 
             is MapScreenContract.Intent.UpdateSelectedOptionTab -> {
                 intent {
-                    viewModelScope.launch {
-
-                        delay(200)
-                        onEventDispatcher(MapScreenContract.Intent.IsLoadingTab(false))
-                        reduce {
-                            state.copy(selectedOptionTab = intent.tapIndex)
-                        }
+                    onEventDispatcher(MapScreenContract.Intent.IsLoadingTab(false))
+                    reduce {
+                        state.copy(selectedOptionTab = intent.tapIndex)
                     }
                 }
-
             }
+
         }
     }
 
