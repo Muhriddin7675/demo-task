@@ -1,6 +1,5 @@
 package com.example.mytaxitask.presenter.screen.map
 
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.BottomSheetScaffold
@@ -35,7 +34,6 @@ import com.example.mytaxitask.util.changeColorStatusBar
 import com.example.mytaxitask.util.getDrawableToBitmap
 import com.example.mytaxitask.util.maxZoom
 import com.example.mytaxitask.util.minZoom
-import com.example.mytaxitask.util.myLog
 import com.example.mytaxitask.util.restoreMapView
 import com.example.mytaxitask.util.tashkentCenterLatLng
 import com.mapbox.mapboxsdk.annotations.IconFactory
@@ -60,7 +58,7 @@ class MapScreen : Screen {
         model.collectSideEffect(sideEffect = { sideEffect ->
             when (sideEffect) {
                 is MapScreenContract.SideEffect.ShowToast -> {
-                    Toast.makeText(context, sideEffect.message, Toast.LENGTH_LONG).show()
+//                    Toast.makeText(context, sideEffect.message, Toast.LENGTH_LONG).show()
                 }
             }
         })
@@ -120,7 +118,6 @@ fun MapScreenContent(
 
     LaunchedEffect(uiState.value.zoom) {
         mapView.getMapAsync { mapboxMap ->
-            myLog("uiState.value.zoom: ${uiState.value.zoom}")
             zoom = if (uiState.value.setHasZoom) {
                 uiState.value.zoom
             } else {
@@ -130,7 +127,6 @@ fun MapScreenContent(
 
             if (zoom < minZoom) zoom = minZoom
             if (zoom > maxZoom) zoom = maxZoom
-            myLog("zoom: $zoom")
             val cameraPosition = CameraPosition.Builder()
                 .target(mapboxMap.cameraPosition.target)
                 .zoom(zoom)
